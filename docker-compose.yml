@@ -1,0 +1,17 @@
+# One-command local stack:  docker compose up --build
+# Then point the Android emulator at http://10.0.2.2:8000/
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      STORAGE_DIR: /data
+      PUBLIC_BASE_URL: http://10.0.2.2:8000
+    volumes:
+      - media-data:/data
+
+volumes:
+  media-data:

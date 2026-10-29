@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Media Studio</string>
+    <string name="pick_image">Pick an image</string>
+    <string name="pick_video">Pick a video</string>
+    <string name="prompt_hint">Describe the edit, e.g. "make it a rainy night in Mumbai"</string>
+</resources>
