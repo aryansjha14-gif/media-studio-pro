@@ -18,6 +18,48 @@ needed.
 
 ---
 
+## v2: what this build adds
+
+**Prompt studio — footage in, finished video out.** Paste a description like your
+rental-property prompt, add clips, and the backend analyses the footage (shot
+boundaries, sharpness, duplicates, silence), builds an edit decision list with
+titles bound to shots, and returns the plan for review. Only after you approve
+it does anything render. `POST /v1/auto/plan` then `POST /v1/auto/render`.
+
+**Very large files.** Uploads no longer load into memory. `POST /v1/uploads`
+opens a session, `PUT /v1/uploads/{id}?offset=N` appends chunks streamed
+straight to disk, `GET` reports the received offset so a dropped connection
+resumes instead of restarting, and `POST /v1/uploads/{id}/complete` registers
+the asset and builds a 540p proxy for scrubbing. Limit is 20 GB by default
+(`MAX_UPLOAD_GB`), with 16 MB chunks (`CHUNK_SIZE_MB`).
+
+**Feature coverage you can check.** All 245 functions from the specification are
+registered in `backend/app/features.py` with a real status, exposed at
+`GET /v1/features` and `/v1/features/summary`, and reported by `/health`.
+Seventy-one are implemented in this build; the rest are marked planned rather
+than quietly implied.
+
+```bash
+curl -s localhost:8000/v1/features/summary | jq
+# {"total": 245, "implemented": 71, "planned": 174, "modules": [...]}
+```
+
+**New tests.** `scripts/smoke_v2.py` generates footage, pushes it through the
+chunked-upload path, asks the planner for a plan, renders it, and probes the
+output — 21 checks, no API key required.
+
+```bash
+cd backend && .venv/bin/python scripts/smoke_v2.py
+```
+
+Two honest notes on the renderer: cross-dissolve needs an ffmpeg build with a
+compatible encoder configuration, so the join falls back to a fade-to-black cut
+and records that in the render report rather than failing; and background music
+still has to be a file you supply or license — the pipeline muxes and
+loudness-normalises it, it does not invent music.
+
+---
+
 ## What it can do
 
 **Images**
@@ -160,13 +202,20 @@ backend/
     routers/              media · images · videos · jobs_router
     services/             image_ops (Pillow) · video_ops (ffmpeg)
     providers/            base · fal · gemini · replicate · mock
-  scripts/smoke_test.py   end-to-end test, no API key required
+  scripts/smoke_test.py   v1 end-to-end test, no API key required
+  scripts/smoke_v2.py     uploads + planning + render test
+  app/features.py         245-function registry with real status
+  app/services/bigupload.py  resumable streamed uploads
+  app/services/analysis.py   scenes, sharpness, duplicates, silence
+  app/services/planner.py    prompt to edit decision list
+  app/services/autoedit.py   EDL to rendered video
   Dockerfile              python:3.12-slim + ffmpeg
 android/
   app/src/main/java/com/aryanjha/mediastudio/
     MainActivity.kt · MediaStudioApp.kt (manual DI container)
     data/                 ApiModels · MediaApi · ApiClient · MediaRepository
     ui/                   AppNav · theme · components · screens · vm
+      screens/PromptStudioScreen.kt   footage + prompt -> plan -> render
 docs/
   API.md                  every endpoint with request/response examples
   ARCHITECTURE.md         diagram, request lifecycle, how to add a provider
@@ -187,6 +236,12 @@ docs/
 | `POST /v1/videos/merge` | `Job` | concat clips |
 | `POST /v1/videos/generate` | `Job` | text-to-video |
 | `POST /v1/videos/{id}/prompt` | `Job` | video-to-video restyle |
+| `POST /v1/uploads` | `UploadSessionOut` | start a resumable upload |
+| `PUT /v1/uploads/{id}?offset=N` | `UploadSessionOut` | append a chunk, resumable |
+| `POST /v1/uploads/{id}/complete` | `MediaAsset` | register + build proxy |
+| `POST /v1/auto/plan` | `AutoPlan` | analyse footage, propose the edit |
+| `POST /v1/auto/render` | `Job` | render the approved plan |
+| `GET /v1/features` | list | every function with status |
 | `GET /v1/jobs/{id}` | `Job` | poll this |
 | `GET /health` | `{status, provider}` | which provider is live |
 
