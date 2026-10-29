@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .providers import get_provider
-from .routers import auto, features, images, jobs_router, media, tools, uploads, videos
+from .routers import auto, features, images, jobs_router, media, platform, tools, uploads, videos
 from .services.video_ops import FFmpegError
 from .services.bigupload import UploadManager
 from .storage import MediaStore
@@ -58,6 +58,7 @@ app.include_router(uploads.router)
 app.include_router(auto.router)
 app.include_router(features.router)
 app.include_router(tools.router)
+app.include_router(platform.router)
 
 
 @app.exception_handler(FFmpegError)

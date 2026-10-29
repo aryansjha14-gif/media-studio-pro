@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,6 +45,7 @@ fun HomeScreen(
     onMediaPicked: (Uri, Boolean) -> Unit,
     onOpenEditor: () -> Unit,
     onOpenStudio: () -> Unit,
+    onOpenDiscover: () -> Unit,
     onPromptChange: (String) -> Unit,
     onGenerateImage: () -> Unit,
     onGenerateVideo: () -> Unit,
@@ -105,6 +107,14 @@ fun HomeScreen(
             subtitle = "Drop in footage, describe the video, review the plan, render",
             actionLabel = "Open studio",
             onClick = onOpenStudio,
+        )
+
+        PickCard(
+            icon = Icons.Filled.Search,
+            title = "Discover",
+            subtitle = "Search all functions, platform frames and Snapchat-style lenses",
+            actionLabel = "Search functions",
+            onClick = onOpenDiscover,
         )
 
         PickCard(

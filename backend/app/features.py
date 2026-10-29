@@ -266,7 +266,43 @@ FEATURES: tuple[Feature, ...] = (
     Feature("N242", "N", "Platform, workflow, business", "Accessibility", "TalkBack and VoiceOver labels", "planned"),
     Feature("N243", "N", "Platform, workflow, business", "Prompt history and reuse", "your best prompts, saved", "implemented"),
     Feature("N244", "N", "Platform, workflow, business", "Prompt template library", "starting points by use case", "planned"),
-    Feature("N245", "N", "Platform, workflow, business", "In-app tutorials and coach marks", "first-run guidance", "planned"),
+    Feature("N245", "N", "Platform, workflow, business", "In-app tutorials and coach marks", "first-run guidance", "planned"),    Feature("O300", "O", "Creator platform packs", "YouTube video frame", "16:9 1920x1080 with control-safe bottom margin", "implemented"),
+    Feature("O301", "O", "Creator platform packs", "YouTube thumbnail frame", "1280x720, under 2 MB", "implemented"),
+    Feature("O302", "O", "Creator platform packs", "YouTube Shorts frame", "9:16 1080x1920 with description-safe bottom", "implemented"),
+    Feature("O303", "O", "Creator platform packs", "Instagram Reel frame", "9:16 with caption-safe bottom 25%", "implemented"),
+    Feature("O304", "O", "Creator platform packs", "Instagram feed frame", "4:5 1080x1350", "implemented"),
+    Feature("O305", "O", "Creator platform packs", "Instagram story frame", "9:16 with avatar-safe top", "implemented"),
+    Feature("O306", "O", "Creator platform packs", "Instagram carousel split", "slice one image into up to 10 slides", "implemented"),
+    Feature("O307", "O", "Creator platform packs", "Snapchat snap frame", "9:16 with lens-safe centre band", "implemented"),
+    Feature("O308", "O", "Creator platform packs", "TikTok frame", "9:16 with button-safe right column", "implemented"),
+    Feature("O309", "O", "Creator platform packs", "WhatsApp status frame", "9:16, heavy compression preset", "implemented"),
+    Feature("O310", "O", "Creator platform packs", "LinkedIn card frame", "1.91:1 1200x627", "implemented"),
+    Feature("O311", "O", "Creator platform packs", "Safe-area guides per platform", "returned as percentages with each preset", "implemented"),
+    Feature("O312", "O", "Creator platform packs", "Duotone lens", "two-colour gradient look", "implemented"),
+    Feature("O313", "O", "Creator platform packs", "Bloom lens", "highlight glow", "implemented"),
+    Feature("O314", "O", "Creator platform packs", "Chromatic lens", "RGB split", "implemented"),
+    Feature("O315", "O", "Creator platform packs", "VHS lens", "scanlines and tape colour", "implemented"),
+    Feature("O316", "O", "Creator platform packs", "Kaleidoscope lens", "mirrored quadrants", "implemented"),
+    Feature("O317", "O", "Creator platform packs", "Mirror lens", "split reflection", "implemented"),
+    Feature("O318", "O", "Creator platform packs", "Thermal lens", "false-colour heat map", "implemented"),
+    Feature("O319", "O", "Creator platform packs", "Pixelate lens", "retro blocks", "implemented"),
+    Feature("O320", "O", "Creator platform packs", "Noir lens", "hard black and white with vignette", "implemented"),
+    Feature("O321", "O", "Creator platform packs", "Neon lens", "boosted colour with edge glow", "implemented"),
+    Feature("O322", "O", "Creator platform packs", "Lens intensity control", "blend strength 0.1 to 1.0", "implemented"),
+    Feature("O323", "O", "Creator platform packs", "Caption sticker", "white rounded badge, Snapchat style", "implemented"),
+    Feature("O324", "O", "Creator platform packs", "Timestamp sticker", "lower-left badge", "implemented"),
+    Feature("O325", "O", "Creator platform packs", "Video lens approximation", "ffmpeg filter chain, reported as approximate", "implemented"),
+    Feature("O326", "O", "Creator platform packs", "Function search", "search all functions by name or description", "implemented"),
+    Feature("O327", "O", "Creator platform packs", "Face-tracked AR lenses", "needs on-device ML Kit face mesh", "planned"),
+    Feature("O328", "O", "Creator platform packs", "Lens store and downloads", "remote lens packs, versioned", "planned"),
+    Feature("O329", "O", "Creator platform packs", "Auto captions for Reels", "speech to text with word timing", "planned"),
+    Feature("O330", "O", "Creator platform packs", "YouTube chapters from speech", "auto chapter titles and timestamps", "planned"),
+    Feature("O331", "O", "Creator platform packs", "End screen and subscribe button overlay", "animated CTA on the last 5 seconds", "planned"),
+    Feature("O332", "O", "Creator platform packs", "Description and hashtag generator", "per-platform copy from the video content", "planned"),
+    Feature("O333", "O", "Creator platform packs", "Trending audio library", "licensed tracks with beat markers", "planned"),
+    Feature("O334", "O", "Creator platform packs", "Story poll and question stickers", "interactive overlays", "planned"),
+    Feature("O335", "O", "Creator platform packs", "Collab and remix exports", "split-screen and duet layouts", "planned"),
+    Feature("O336", "O", "Creator platform packs", "Schedule and publish", "direct upload to each platform API", "planned"),
 )
 
 MODULES: tuple[tuple[str, str, int], ...] = (
@@ -284,6 +320,7 @@ MODULES: tuple[tuple[str, str, int], ...] = (
     ("L", "Titles and graphics for video", 14),
     ("M", "Export and delivery", 15),
     ("N", "Platform, workflow, business", 21),
+    ("O", "Creator platform packs", 37),
 )
 
 TOTAL = len(FEATURES)
@@ -304,6 +341,27 @@ def summary() -> dict:
         "planned": TOTAL - IMPLEMENTED_COUNT,
         "modules": per_module,
     }
+
+
+def search(query: str, limit: int = 20) -> list[dict]:
+    """Rank functions by where the query matches: name first, then module, then note."""
+    q = query.strip().lower()
+    if not q:
+        return []
+    scored: list[tuple[int, dict]] = []
+    for f in FEATURES:
+        name = f.name.lower()
+        if q in name:
+            score = 0 if name.startswith(q) else 1
+        elif q in f.module_title.lower():
+            score = 2
+        elif q in f.note.lower():
+            score = 3
+        else:
+            continue
+        scored.append((score, f.__dict__))
+    scored.sort(key=lambda pair: (pair[0], pair[1]["status"] != "implemented", pair[1]["name"]))
+    return [item for _, item in scored[:limit]]
 
 
 def all_features() -> list[dict]:

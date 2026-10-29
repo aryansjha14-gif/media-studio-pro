@@ -11,10 +11,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.aryanjha.mediastudio.data.MediaRepository
+import com.aryanjha.mediastudio.ui.screens.DiscoverScreen
 import com.aryanjha.mediastudio.ui.screens.HomeScreen
 import com.aryanjha.mediastudio.ui.screens.PromptStudioScreen
 import com.aryanjha.mediastudio.ui.screens.ImageEditorScreen
 import com.aryanjha.mediastudio.ui.screens.VideoEditorScreen
+import com.aryanjha.mediastudio.ui.vm.DiscoverViewModel
 import com.aryanjha.mediastudio.ui.vm.EditorViewModel
 import com.aryanjha.mediastudio.ui.vm.StudioViewModel
 
@@ -23,6 +25,7 @@ private object Routes {
     const val IMAGE = "image"
     const val VIDEO = "video"
     const val STUDIO = "studio"
+    const val DISCOVER = "discover"
 }
 
 @Composable
@@ -32,6 +35,8 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
     val state by vm.state.collectAsState()
     val studioVm: StudioViewModel = viewModel(factory = StudioViewModel.factory(repository))
     val studioState by studioVm.state.collectAsState()
+    val discoverVm: DiscoverViewModel = viewModel(factory = DiscoverViewModel.factory(repository))
+    val discoverState by discoverVm.state.collectAsState()
 
     Scaffold { padding ->
         NavHost(
@@ -48,6 +53,7 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                         navController.navigate(if (expectVideo) Routes.VIDEO else Routes.IMAGE)
                     },
                     onOpenStudio = { navController.navigate(Routes.STUDIO) },
+                    onOpenDiscover = { navController.navigate(Routes.DISCOVER) },
                     onOpenEditor = {
                         val target = if (state.current?.isVideo == true) Routes.VIDEO else Routes.IMAGE
                         navController.navigate(target)
@@ -62,6 +68,23 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                         navController.navigate(Routes.VIDEO)
                     },
                     onDismissError = vm::clearError,
+                )
+            }
+
+            composable(Routes.DISCOVER) {
+                DiscoverScreen(
+                    state = discoverState,
+                    onBack = { navController.popBackStack() },
+                    onQueryChange = discoverVm::onQueryChange,
+                    onApplyPlatform = { name ->
+                        vm.applyPlatform(name)
+                        navController.navigate(Routes.IMAGE) { launchSingleTop = true }
+                    },
+                    onApplyLens = { lens ->
+                        vm.applyLens(lens)
+                        navController.navigate(Routes.IMAGE) { launchSingleTop = true }
+                    },
+                    onDismissError = discoverVm::clearError,
                 )
             }
 

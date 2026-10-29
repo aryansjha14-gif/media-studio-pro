@@ -141,6 +141,22 @@ class EditorViewModel(private val repo: MediaRepository) : ViewModel() {
         repo.runJob(onUpdate) { repo.generateImage(_state.value.prompt.trim()) }
     }
 
+    // -- creator packs and lenses ------------------------------------------ //
+    fun applyPlatform(platform: String) = launchTask("Fitting $platform frame…") {
+        val asset = _state.value.current ?: error("Nothing to reframe")
+        pushHistory(repo.fitPlatform(asset, platform))
+    }
+
+    fun applyLens(lens: String, intensity: Float = 1f) = launchTask("Applying $lens…") {
+        val asset = _state.value.current ?: error("Nothing to apply the lens to")
+        pushHistory(repo.applyLens(asset, lens, intensity))
+    }
+
+    fun addSticker(text: String) = launchTask("Adding caption…") {
+        val asset = _state.value.current ?: error("Nothing to caption")
+        pushHistory(repo.addSticker(asset, text))
+    }
+
     // -- AI: video --------------------------------------------------------- //
     fun trimVideo() = launchTask("Trimming…") {
         val asset = _state.value.current ?: error("Nothing to trim")
