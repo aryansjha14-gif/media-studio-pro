@@ -8,9 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -25,6 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.aryanjha.mediastudio.data.FeatureItem
+import com.aryanjha.mediastudio.data.LensInfo
+import com.aryanjha.mediastudio.data.PlatformPreset
 import com.aryanjha.mediastudio.ui.components.ErrorBanner
 import com.aryanjha.mediastudio.ui.vm.DiscoverUiState
 
@@ -37,7 +39,13 @@ fun DiscoverScreen(
     onApplyLens: (String) -> Unit,
     onDismissError: () -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -58,96 +66,116 @@ fun DiscoverScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            placeholder = { Text("Search functions: reel, lens, curve, watermark…") },
+            placeholder = { Text("Search: reel, lens, curve, subtitle, brand…") },
         )
 
         if (state.error != null) {
-            Spacer(Modifier.height(8.dp))
             ErrorBanner(state.error, onDismissError)
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-        ) {
-            if (state.query.isNotBlank()) {
-                item {
-                    Text(
-                        "${state.results.size} result(s)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                items(state.results) { feature ->
-                    Column(Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(feature.name, style = MaterialTheme.typography.bodyMedium)
-                            AssistChip(
-                                onClick = {},
-                                label = { Text(if (feature.isImplemented) "ready" else "planned") },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    labelColor = if (feature.isImplemented) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                ),
-                            )
-                        }
-                        Text(
-                            "${feature.module_title} · ${feature.note}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            } else {
-                item {
-                    Text("Platform frames", style = MaterialTheme.typography.titleMedium)
-                }
-                item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(state.platforms) { platform ->
-                            AssistChip(
-                                onClick = { onApplyPlatform(platform.name) },
-                                label = { Text("${platform.label} · ${platform.aspect}") },
-                            )
-                        }
-                    }
-                }
-                item {
-                    Text(
-                        "Tap a frame to fit the current media to it.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                item { Spacer(Modifier.height(8.dp)) }
-                item { Text("Lenses", style = MaterialTheme.typography.titleMedium) }
-                items(state.lenses) { lens ->
-                    Column {
-                        Text(lens.name.replaceFirstChar { it.uppercase() },
-                            style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            lens.description,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                item {
-                    Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = { onApplyLens("duotone") }, label = { Text("Try duotone") })
-                        AssistChip(onClick = { onApplyLens("bloom") }, label = { Text("Try bloom") })
-                    }
-                }
+        if (state.query.isNotBlank()) {
+            Text(
+                "${state.results.size} result(s)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            for (feature in state.results) {
+                FeatureRow(feature)
+            }
+            if (state.results.isEmpty() && !state.loading) {
+                Text(
+                    "Nothing matched. Try 'video', 'lens' or 'watermark'.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            Text("Platform frames", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Tap a frame to fit the current media to it.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            for (platform in state.platforms) {
+                PlatformRow(platform, onApplyPlatform)
+            }
+
+            Spacer(Modifier.height(6.dp))
+            Text("Lenses", style = MaterialTheme.typography.titleMedium)
+            for (lens in state.lenses) {
+                LensRow(lens, onApplyLens)
             }
         }
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun FeatureRow(feature: FeatureItem) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(feature.name, style = MaterialTheme.typography.bodyMedium)
+            AssistChip(
+                onClick = {},
+                label = { Text(if (feature.isImplemented) "ready" else "planned") },
+                colors = AssistChipDefaults.assistChipColors(
+                    labelColor = if (feature.isImplemented) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                ),
+            )
+        }
+        Text(
+            feature.moduleTitle + " · " + feature.note,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun PlatformRow(platform: PlatformPreset, onApply: (String) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(platform.label, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                platform.frame,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        AssistChip(onClick = { onApply(platform.name) }, label = { Text("Fit") })
+    }
+}
+
+@Composable
+private fun LensRow(lens: LensInfo, onApply: (String) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                lens.name.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                lens.description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        AssistChip(onClick = { onApply(lens.name) }, label = { Text("Apply") })
     }
 }
