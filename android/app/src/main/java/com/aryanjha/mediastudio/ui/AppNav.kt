@@ -13,11 +13,13 @@ import androidx.navigation.compose.rememberNavController
 import com.aryanjha.mediastudio.data.MediaRepository
 import com.aryanjha.mediastudio.ui.screens.DiscoverScreen
 import com.aryanjha.mediastudio.ui.screens.HomeScreen
+import com.aryanjha.mediastudio.ui.screens.PacksScreen
 import com.aryanjha.mediastudio.ui.screens.PromptStudioScreen
 import com.aryanjha.mediastudio.ui.screens.ImageEditorScreen
 import com.aryanjha.mediastudio.ui.screens.VideoEditorScreen
 import com.aryanjha.mediastudio.ui.vm.DiscoverViewModel
 import com.aryanjha.mediastudio.ui.vm.EditorViewModel
+import com.aryanjha.mediastudio.ui.vm.PacksViewModel
 import com.aryanjha.mediastudio.ui.vm.StudioViewModel
 
 private object Routes {
@@ -26,6 +28,7 @@ private object Routes {
     const val VIDEO = "video"
     const val STUDIO = "studio"
     const val DISCOVER = "discover"
+    const val PACKS = "packs"
 }
 
 @Composable
@@ -37,6 +40,8 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
     val studioState by studioVm.state.collectAsState()
     val discoverVm: DiscoverViewModel = viewModel(factory = DiscoverViewModel.factory(repository))
     val discoverState by discoverVm.state.collectAsState()
+    val packsVm: PacksViewModel = viewModel(factory = PacksViewModel.factory(repository))
+    val packsState by packsVm.state.collectAsState()
 
     Scaffold { padding ->
         NavHost(
@@ -54,6 +59,7 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                     },
                     onOpenStudio = { navController.navigate(Routes.STUDIO) },
                     onOpenDiscover = { navController.navigate(Routes.DISCOVER) },
+                    onOpenPacks = { navController.navigate(Routes.PACKS) },
                     onOpenEditor = {
                         val target = if (state.current?.isVideo == true) Routes.VIDEO else Routes.IMAGE
                         navController.navigate(target)
@@ -68,6 +74,33 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                         navController.navigate(Routes.VIDEO)
                     },
                     onDismissError = vm::clearError,
+                )
+            }
+
+            composable(Routes.PACKS) {
+                val current = state.current
+                PacksScreen(
+                    asset = current,
+                    state = packsState,
+                    onBack = { navController.popBackStack() },
+                    onMagicResize = { platforms ->
+                        current?.let { packsVm.magicResize(it, platforms) }
+                    },
+                    onBrand = { headline, subline, colour ->
+                        current?.let { packsVm.applyBrand(it, headline, subline, colour) }
+                    },
+                    onSubtitles = { srt -> current?.let { packsVm.burnSubtitles(it, srt) } },
+                    onCameraMotion = { motion -> current?.let { packsVm.cameraMotion(it, motion) } },
+                    onChroma = { colour -> current?.let { packsVm.chromaKey(it, colour) } },
+                    onDenoise = { current?.let { packsVm.denoiseAudio(it) } },
+                    onProgressBar = { current?.let { packsVm.addProgressBar(it, "#6EE7B7") } },
+                    onOpenResult = { result ->
+                        vm.openAsset(result)
+                        navController.navigate(
+                            if (result.isVideo) Routes.VIDEO else Routes.IMAGE
+                        ) { launchSingleTop = true }
+                    },
+                    onDismissError = packsVm::clearError,
                 )
             }
 

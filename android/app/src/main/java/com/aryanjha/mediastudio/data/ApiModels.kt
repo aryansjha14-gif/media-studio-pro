@@ -206,3 +206,37 @@ data class FeatureItem(
 
 @Serializable
 data class StickerRequest(val text: String, val style: String = "caption")
+
+// --------------------------------------------------------------------------- //
+// v5: Canva / Runway / Veed packs
+// --------------------------------------------------------------------------- //
+
+@Serializable
+data class MagicResizeRequest(
+    val platforms: List<String>,
+    val mode: String = "cover",
+)
+
+@Serializable
+data class BrandRequest(
+    val headline: String = "",
+    val subline: String = "",
+    val colour: String = "#0F766E",
+    val position: String = "bottom",
+)
+
+@Serializable
+data class SubtitleRequest(val srt: String)
+
+@Serializable
+data class ChromaRequest(
+    val colour: String = "green",
+    val similarity: Float = 0.3f,
+    val smoothness: Float = 0.1f,
+)
+
+@Serializable
+data class MotionRequest(val motion: String = "in", val strength: Float = 1.12f)
+
+@Serializable
+data class ProgressRequest(val colour: String = "#6EE7B7", val height_pct: Float = 0.012f)

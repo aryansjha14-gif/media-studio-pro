@@ -1,7 +1,9 @@
 package com.aryanjha.mediastudio.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -49,6 +51,13 @@ fun MediaStudioTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = AppTypography,
+        shapes = Shapes(
+            extraSmall = RoundedCornerShape(8),
+            small = RoundedCornerShape(12),
+            medium = RoundedCornerShape(16),
+            large = RoundedCornerShape(22),
+            extraLarge = RoundedCornerShape(28),
+        ),
         content = content,
     )
 }

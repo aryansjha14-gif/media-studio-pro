@@ -46,6 +46,7 @@ fun HomeScreen(
     onOpenEditor: () -> Unit,
     onOpenStudio: () -> Unit,
     onOpenDiscover: () -> Unit,
+    onOpenPacks: () -> Unit,
     onPromptChange: (String) -> Unit,
     onGenerateImage: () -> Unit,
     onGenerateVideo: () -> Unit,
@@ -107,6 +108,14 @@ fun HomeScreen(
             subtitle = "Drop in footage, describe the video, review the plan, render",
             actionLabel = "Open studio",
             onClick = onOpenStudio,
+        )
+
+        PickCard(
+            icon = Icons.Filled.AutoAwesome,
+            title = "Studio packs",
+            subtitle = "Canva magic resize and brand bar, Veed subtitles, Runway camera moves",
+            actionLabel = "Open packs",
+            onClick = onOpenPacks,
         )
 
         PickCard(

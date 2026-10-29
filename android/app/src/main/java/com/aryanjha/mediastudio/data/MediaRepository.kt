@@ -180,4 +180,27 @@ class MediaRepository(
 
     suspend fun addSticker(asset: MediaAsset, text: String, style: String = "caption"): MediaAsset =
         api.addSticker(asset.id, StickerRequest(text, style))
+
+    // -- Canva / Runway / Veed packs --------------------------------------- //
+    suspend fun magicResize(asset: MediaAsset, platforms: List<String>): List<MediaAsset> =
+        api.magicResize(asset.id, MagicResizeRequest(platforms))
+
+    suspend fun applyBrand(
+        asset: MediaAsset, headline: String, subline: String, colour: String,
+    ): MediaAsset = api.applyBrand(asset.id, BrandRequest(headline, subline, colour))
+
+    suspend fun burnSubtitles(asset: MediaAsset, srt: String): MediaAsset =
+        runJob { api.burnSubtitles(asset.id, SubtitleRequest(srt)) }
+
+    suspend fun chromaKey(asset: MediaAsset, colour: String): MediaAsset =
+        runJob { api.chromaKey(asset.id, ChromaRequest(colour)) }
+
+    suspend fun cameraMotion(asset: MediaAsset, motion: String): MediaAsset =
+        runJob { api.cameraMotion(asset.id, MotionRequest(motion)) }
+
+    suspend fun denoiseAudio(asset: MediaAsset): MediaAsset =
+        runJob { api.denoiseAudio(asset.id) }
+
+    suspend fun addProgressBar(asset: MediaAsset, colour: String): MediaAsset =
+        runJob { api.progressBar(asset.id, ProgressRequest(colour)) }
 }

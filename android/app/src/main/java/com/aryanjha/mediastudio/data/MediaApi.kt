@@ -121,4 +121,26 @@ interface MediaApi {
 
     @POST("v1/sticker/{id}")
     suspend fun addSticker(@Path("id") id: String, @Body body: StickerRequest): MediaAsset
+
+    // -- v5: Canva / Runway / Veed packs ---------------------------------- //
+    @POST("v1/packs/magic-resize/{id}")
+    suspend fun magicResize(@Path("id") id: String, @Body body: MagicResizeRequest): List<MediaAsset>
+
+    @POST("v1/packs/brand/{id}")
+    suspend fun applyBrand(@Path("id") id: String, @Body body: BrandRequest): MediaAsset
+
+    @POST("v1/packs/subtitles/{id}")
+    suspend fun burnSubtitles(@Path("id") id: String, @Body body: SubtitleRequest): Job
+
+    @POST("v1/packs/chroma-key/{id}")
+    suspend fun chromaKey(@Path("id") id: String, @Body body: ChromaRequest): Job
+
+    @POST("v1/packs/camera-motion/{id}")
+    suspend fun cameraMotion(@Path("id") id: String, @Body body: MotionRequest): Job
+
+    @POST("v1/packs/denoise-audio/{id}")
+    suspend fun denoiseAudio(@Path("id") id: String): Job
+
+    @POST("v1/packs/progress-bar/{id}")
+    suspend fun progressBar(@Path("id") id: String, @Body body: ProgressRequest): Job
 }

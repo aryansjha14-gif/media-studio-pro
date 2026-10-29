@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- aperture ring -->
+    <path
+        android:strokeColor="#6EE7B7"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M54,28 A26,26 0 1,1 53.9,28" />
+    <!-- play triangle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,44 L66,54 L48,64 Z" />
+    <!-- edit spark -->
+    <path
+        android:fillColor="#6EE7B7"
+        android:pathData="M72,30 L75,36 L81,39 L75,42 L72,48 L69,42 L63,39 L69,36 Z" />
+    <!-- image dot -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M40,68 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>
