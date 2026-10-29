@@ -115,6 +115,16 @@ All checks passed.
 
 Or with Docker: `docker compose up --build` (ffmpeg is baked into the image).
 
+## Getting the APK and AAB
+
+Android needs a JDK and the Android SDK, which this project's CI provides. Push
+to `main` (or run the workflow manually) and GitHub Actions builds both:
+
+- **Actions** tab -> newest **Build APK and AAB** run -> download
+  `media-studio-debug-apk` (installable) or `media-studio-release-aab`.
+
+Details, local builds and signing: `docs/RELEASE.md`.
+
 ## Quickstart (Android)
 
 1. Open the `android/` folder in Android Studio (Ladybug or newer).
