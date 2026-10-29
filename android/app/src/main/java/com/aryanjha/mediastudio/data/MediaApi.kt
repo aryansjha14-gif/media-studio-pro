@@ -83,4 +83,42 @@ interface MediaApi {
     // -- v2: feature coverage -------------------------------------------- //
     @GET("v1/features/summary")
     suspend fun featureSummary(): FeatureSummary
+
+    // -- v4: creator packs, lenses, search ------------------------------- //
+    @GET("v1/platforms")
+    suspend fun platforms(): List<PlatformPreset>
+
+    @GET("v1/lenses")
+    suspend fun lenses(): List<LensInfo>
+
+    @GET("v1/features/search")
+    suspend fun searchFeatures(@Query("q") query: String, @Query("limit") limit: Int = 30): List<FeatureItem>
+
+    @POST("v1/platforms/{name}/image/{id}")
+    suspend fun fitPlatformImage(
+        @Path("name") name: String,
+        @Path("id") id: String,
+    ): MediaAsset
+
+    @POST("v1/platforms/{name}/video/{id}")
+    suspend fun fitPlatformVideo(
+        @Path("name") name: String,
+        @Path("id") id: String,
+    ): Job
+
+    @POST("v1/lenses/{lens}/image/{id}")
+    suspend fun applyLensImage(
+        @Path("lens") lens: String,
+        @Path("id") id: String,
+        @Query("intensity") intensity: Float = 1f,
+    ): MediaAsset
+
+    @POST("v1/lenses/{lens}/video/{id}")
+    suspend fun applyLensVideo(
+        @Path("lens") lens: String,
+        @Path("id") id: String,
+    ): Job
+
+    @POST("v1/sticker/{id}")
+    suspend fun addSticker(@Path("id") id: String, @Body body: StickerRequest): MediaAsset
 }

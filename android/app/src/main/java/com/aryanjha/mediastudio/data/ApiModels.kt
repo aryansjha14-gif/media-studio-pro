@@ -172,3 +172,37 @@ data class UploadInitRequest(
     val total_bytes: Long,
     val mime: String? = null,
 )
+
+// --------------------------------------------------------------------------- //
+// v4: creator platform packs, lenses, function search
+// --------------------------------------------------------------------------- //
+
+@Serializable
+data class PlatformPreset(
+    val name: String,
+    val label: String,
+    val width: Int,
+    val height: Int,
+    val aspect: String,
+    val notes: String? = null,
+) {
+    val frame: String get() = "${width}x${height} · $aspect"
+}
+
+@Serializable
+data class LensInfo(val name: String, val description: String)
+
+@Serializable
+data class FeatureItem(
+    val id: String,
+    val module: String,
+    @SerialName("module_title") val moduleTitle: String,
+    val name: String,
+    val note: String,
+    val status: String,
+) {
+    val isImplemented: Boolean get() = status == "implemented"
+}
+
+@Serializable
+data class StickerRequest(val text: String, val style: String = "caption")

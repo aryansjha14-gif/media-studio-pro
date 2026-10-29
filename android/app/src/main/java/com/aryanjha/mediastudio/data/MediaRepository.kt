@@ -155,4 +155,29 @@ class MediaRepository(
         api.autoRender(RenderRequest(plan, musicMediaId))
 
     suspend fun featureSummary(): FeatureSummary = api.featureSummary()
+
+    // -- creator packs, lenses, search ------------------------------------ //
+    suspend fun platforms(): List<PlatformPreset> = api.platforms()
+
+    suspend fun lenses(): List<LensInfo> = api.lenses()
+
+    suspend fun searchFeatures(query: String): List<FeatureItem> =
+        if (query.isBlank()) emptyList() else api.searchFeatures(query)
+
+    suspend fun fitPlatform(asset: MediaAsset, platform: String): MediaAsset =
+        if (asset.isVideo) {
+            runJob { api.fitPlatformVideo(platform, asset.id) }
+        } else {
+            api.fitPlatformImage(platform, asset.id)
+        }
+
+    suspend fun applyLens(asset: MediaAsset, lens: String, intensity: Float = 1f): MediaAsset =
+        if (asset.isVideo) {
+            runJob { api.applyLensVideo(lens, asset.id) }
+        } else {
+            api.applyLensImage(lens, asset.id, intensity)
+        }
+
+    suspend fun addSticker(asset: MediaAsset, text: String, style: String = "caption"): MediaAsset =
+        api.addSticker(asset.id, StickerRequest(text, style))
 }
