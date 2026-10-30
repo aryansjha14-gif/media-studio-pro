@@ -66,12 +66,18 @@ async def main() -> int:
 
         async with httpx.AsyncClient(transport=transport, base_url="http://test", timeout=600) as client:
             health = (await client.get("/health")).json()
-            check("health reports feature totals", health["features"]["total"] == 245,
-                  str(health.get("features")))
+            features = health["features"]
+            check("health reports feature totals",
+                  features["total"] >= 280
+                  and features["total"] == features["implemented"] + features["planned"],
+                  str(features))
             check("upload limit is 20 GB", health["max_upload_gb"] == 20.0)
 
             feats = (await client.get("/v1/features/summary")).json()
-            check("feature summary", feats["total"] == 245 and feats["implemented"] >= 70,
+            check("feature summary",
+                  feats["total"] >= 280
+                  and feats["implemented"] >= 100
+                  and feats["total"] == feats["implemented"] + feats["planned"],
                   str(feats))
 
             # --- resumable upload in 3 chunks ---------------------------- #

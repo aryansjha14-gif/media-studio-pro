@@ -3,6 +3,8 @@ package com.aryanjha.mediastudio
 import android.app.Application
 import android.content.Context
 import com.aryanjha.mediastudio.data.ApiClient
+import com.aryanjha.mediastudio.data.ApiHolder
+import com.aryanjha.mediastudio.data.SettingsStore
 import com.aryanjha.mediastudio.data.MediaApi
 import com.aryanjha.mediastudio.data.MediaRepository
 import kotlinx.serialization.json.Json
@@ -16,8 +18,12 @@ class AppContainer(context: Context) {
         encodeDefaults = true      // send explicit values for sliders at 1.0
     }
 
-    val api: MediaApi = ApiClient.create(BuildConfig.API_BASE_URL, json)
-    val repository: MediaRepository = MediaRepository(api, context.applicationContext)
+    val settings: SettingsStore = SettingsStore(context.applicationContext)
+    val holder: ApiHolder = ApiHolder(
+        initialBaseUrl = settings.baseUrl ?: BuildConfig.API_BASE_URL,
+        json = json,
+    )
+    val repository: MediaRepository = MediaRepository(holder, settings, context.applicationContext)
 }
 
 class MediaStudioApp : Application() {

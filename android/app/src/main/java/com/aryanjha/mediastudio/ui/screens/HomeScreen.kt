@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,6 +48,7 @@ fun HomeScreen(
     onOpenStudio: () -> Unit,
     onOpenDiscover: () -> Unit,
     onOpenPacks: () -> Unit,
+    onOpenSettings: () -> Unit,
     onPromptChange: (String) -> Unit,
     onGenerateImage: () -> Unit,
     onGenerateVideo: () -> Unit,
@@ -80,10 +82,15 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            AssistChip(
-                onClick = {},
-                label = { Text(state.providerName ?: "offline") },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AssistChip(
+                    onClick = onOpenSettings,
+                    label = { Text(state.providerName ?: "offline") },
+                )
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                }
+            }
         }
 
         if (state.error != null) {

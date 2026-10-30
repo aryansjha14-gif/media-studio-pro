@@ -14,12 +14,14 @@ import com.aryanjha.mediastudio.data.MediaRepository
 import com.aryanjha.mediastudio.ui.screens.DiscoverScreen
 import com.aryanjha.mediastudio.ui.screens.HomeScreen
 import com.aryanjha.mediastudio.ui.screens.PacksScreen
+import com.aryanjha.mediastudio.ui.screens.SettingsScreen
 import com.aryanjha.mediastudio.ui.screens.PromptStudioScreen
 import com.aryanjha.mediastudio.ui.screens.ImageEditorScreen
 import com.aryanjha.mediastudio.ui.screens.VideoEditorScreen
 import com.aryanjha.mediastudio.ui.vm.DiscoverViewModel
 import com.aryanjha.mediastudio.ui.vm.EditorViewModel
 import com.aryanjha.mediastudio.ui.vm.PacksViewModel
+import com.aryanjha.mediastudio.ui.vm.SettingsViewModel
 import com.aryanjha.mediastudio.ui.vm.StudioViewModel
 
 private object Routes {
@@ -29,6 +31,7 @@ private object Routes {
     const val STUDIO = "studio"
     const val DISCOVER = "discover"
     const val PACKS = "packs"
+    const val SETTINGS = "settings"
 }
 
 @Composable
@@ -42,6 +45,8 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
     val discoverState by discoverVm.state.collectAsState()
     val packsVm: PacksViewModel = viewModel(factory = PacksViewModel.factory(repository))
     val packsState by packsVm.state.collectAsState()
+    val settingsVm: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(repository))
+    val settingsState by settingsVm.state.collectAsState()
 
     Scaffold { padding ->
         NavHost(
@@ -60,6 +65,7 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                     onOpenStudio = { navController.navigate(Routes.STUDIO) },
                     onOpenDiscover = { navController.navigate(Routes.DISCOVER) },
                     onOpenPacks = { navController.navigate(Routes.PACKS) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenEditor = {
                         val target = if (state.current?.isVideo == true) Routes.VIDEO else Routes.IMAGE
                         navController.navigate(target)
@@ -74,6 +80,17 @@ fun AppNav(repository: MediaRepository, baseUrl: String) {
                         navController.navigate(Routes.VIDEO)
                     },
                     onDismissError = vm::clearError,
+                )
+            }
+
+            composable(Routes.SETTINGS) {
+                SettingsScreen(
+                    state = settingsState,
+                    onBack = { navController.popBackStack() },
+                    onDraftChange = settingsVm::onDraftChange,
+                    onSave = settingsVm::save,
+                    onTest = settingsVm::test,
+                    onDismissError = settingsVm::clearError,
                 )
             }
 

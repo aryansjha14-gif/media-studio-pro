@@ -11,9 +11,21 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class MediaRepository(
-    private val api: MediaApi,
+    private val holder: ApiHolder,
+    private val settings: SettingsStore,
     private val context: Context,
 ) {
+
+    private fun api(): MediaApi = holder.api()
+
+    /** Current backend URL, shown in Settings. */
+    fun baseUrl(): String = holder.baseUrl()
+
+    /** Point the app at a different server without rebuilding. */
+    fun updateBaseUrl(url: String) {
+        holder.setBaseUrl(url)
+        settings.baseUrl = holder.baseUrl()
+    }
 
     /** Upload a picked image/video and get back the asset to edit. */
     suspend fun upload(uri: Uri): MediaAsset = withContext(Dispatchers.IO) {
@@ -28,7 +40,7 @@ class MediaRepository(
             name,
             bytes.toRequestBody(mime.toMediaTypeOrNull()),
         )
-        api.upload(part)
+        api().upload(part)
     }
 
     private fun queryDisplayName(uri: Uri): String? {
@@ -50,7 +62,7 @@ class MediaRepository(
         var waited = 0L
         val stepMs = 1200L
         while (waited < timeoutMs) {
-            val job = api.job(jobId)
+            val job = api().job(jobId)
             onUpdate(job)
             if (job.isDone) return job
             delay(stepMs)
@@ -60,28 +72,28 @@ class MediaRepository(
     }
 
     // -- instant edits (no AI, no job) ------------------------------------ //
-    suspend fun adjust(assetId: String, body: AdjustRequest): MediaAsset = api.adjust(assetId, body)
+    suspend fun adjust(assetId: String, body: AdjustRequest): MediaAsset = api().adjust(assetId, body)
 
-    suspend fun trim(assetId: String, body: TrimRequest): MediaAsset = api.trim(assetId, body)
+    suspend fun trim(assetId: String, body: TrimRequest): MediaAsset = api().trim(assetId, body)
 
-    suspend fun extractFrame(assetId: String, body: FrameRequest): MediaAsset = api.frame(assetId, body)
+    suspend fun extractFrame(assetId: String, body: FrameRequest): MediaAsset = api().frame(assetId, body)
 
     // -- AI edits (job-based) --------------------------------------------- //
     suspend fun promptEdit(assetId: String, prompt: String): Job =
-        api.promptEdit(assetId, PromptEditRequest(prompt = prompt))
+        api().promptEdit(assetId, PromptEditRequest(prompt = prompt))
 
-    suspend fun upscale(assetId: String, factor: Float = 2f): Job = api.upscale(assetId, factor)
+    suspend fun upscale(assetId: String, factor: Float = 2f): Job = api().upscale(assetId, factor)
 
-    suspend fun removeBackground(assetId: String): Job = api.removeBackground(assetId)
+    suspend fun removeBackground(assetId: String): Job = api().removeBackground(assetId)
 
     suspend fun generateImage(prompt: String): Job =
-        api.generateImage(GenerateImageRequest(prompt = prompt))
+        api().generateImage(GenerateImageRequest(prompt = prompt))
 
     suspend fun restyleVideo(assetId: String, prompt: String): Job =
-        api.videoPrompt(assetId, VideoPromptRequest(prompt = prompt))
+        api().videoPrompt(assetId, VideoPromptRequest(prompt = prompt))
 
     suspend fun generateVideo(prompt: String, duration: Int = 5): Job =
-        api.generateVideo(GenerateVideoRequest(prompt = prompt, duration = duration))
+        api().generateVideo(GenerateVideoRequest(prompt = prompt, duration = duration))
 
     /** Run an AI call that returns a Job, then wait for its asset. */
     suspend fun runJob(
@@ -95,7 +107,7 @@ class MediaRepository(
             ?: error(finished.error ?: "The job finished without producing media")
     }
 
-    suspend fun health(): HealthResponse = api.health()
+    suspend fun health(): HealthResponse = api().health()
 
     /**
      * Upload any size of file, in chunks, with resume.
@@ -115,7 +127,7 @@ class MediaRepository(
         val total = resolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
         require(total > 0) { "Could not determine the file size" }
 
-        val session = api.uploadInit(UploadInitRequest(name, total, mime))
+        val session = api().uploadInit(UploadInitRequest(name, total, mime))
         val chunkSize = session.chunk_size.toInt().coerceAtLeast(256 * 1024)
 
         var offset = session.received
@@ -132,13 +144,13 @@ class MediaRepository(
                 if (read <= 0) break
                 val piece = buffer.copyOf(read)
                 val body = piece.toRequestBody(mime.toMediaTypeOrNull())
-                val state = api.uploadChunk(session.upload_id, offset, body)
+                val state = api().uploadChunk(session.upload_id, offset, body)
                 offset = state.received
                 onProgress(offset, total)
             }
         } ?: error("Could not open the selected file")
 
-        api.uploadComplete(session.upload_id)
+        api().uploadComplete(session.upload_id)
     }
 
     /** Analyse the footage and return the proposed edit, without rendering. */
@@ -148,59 +160,59 @@ class MediaRepository(
         musicMediaId: String? = null,
         width: Int = 1920,
         height: Int = 1080,
-    ): AutoPlan = api.autoPlan(PlanRequest(prompt, mediaIds, musicMediaId, width, height))
+    ): AutoPlan = api().autoPlan(PlanRequest(prompt, mediaIds, musicMediaId, width, height))
 
     /** Render an approved plan. Long job; poll with awaitJob. */
     suspend fun renderAutoEdit(plan: AutoPlan, musicMediaId: String? = null): Job =
-        api.autoRender(RenderRequest(plan, musicMediaId))
+        api().autoRender(RenderRequest(plan, musicMediaId))
 
-    suspend fun featureSummary(): FeatureSummary = api.featureSummary()
+    suspend fun featureSummary(): FeatureSummary = api().featureSummary()
 
     // -- creator packs, lenses, search ------------------------------------ //
-    suspend fun platforms(): List<PlatformPreset> = api.platforms()
+    suspend fun platforms(): List<PlatformPreset> = api().platforms()
 
-    suspend fun lenses(): List<LensInfo> = api.lenses()
+    suspend fun lenses(): List<LensInfo> = api().lenses()
 
     suspend fun searchFeatures(query: String): List<FeatureItem> =
-        if (query.isBlank()) emptyList() else api.searchFeatures(query)
+        if (query.isBlank()) emptyList() else api().searchFeatures(query)
 
     suspend fun fitPlatform(asset: MediaAsset, platform: String): MediaAsset =
         if (asset.isVideo) {
-            runJob { api.fitPlatformVideo(platform, asset.id) }
+            runJob { api().fitPlatformVideo(platform, asset.id) }
         } else {
-            api.fitPlatformImage(platform, asset.id)
+            api().fitPlatformImage(platform, asset.id)
         }
 
     suspend fun applyLens(asset: MediaAsset, lens: String, intensity: Float = 1f): MediaAsset =
         if (asset.isVideo) {
-            runJob { api.applyLensVideo(lens, asset.id) }
+            runJob { api().applyLensVideo(lens, asset.id) }
         } else {
-            api.applyLensImage(lens, asset.id, intensity)
+            api().applyLensImage(lens, asset.id, intensity)
         }
 
     suspend fun addSticker(asset: MediaAsset, text: String, style: String = "caption"): MediaAsset =
-        api.addSticker(asset.id, StickerRequest(text, style))
+        api().addSticker(asset.id, StickerRequest(text, style))
 
     // -- Canva / Runway / Veed packs --------------------------------------- //
     suspend fun magicResize(asset: MediaAsset, platforms: List<String>): List<MediaAsset> =
-        api.magicResize(asset.id, MagicResizeRequest(platforms))
+        api().magicResize(asset.id, MagicResizeRequest(platforms))
 
     suspend fun applyBrand(
         asset: MediaAsset, headline: String, subline: String, colour: String,
-    ): MediaAsset = api.applyBrand(asset.id, BrandRequest(headline, subline, colour))
+    ): MediaAsset = api().applyBrand(asset.id, BrandRequest(headline, subline, colour))
 
     suspend fun burnSubtitles(asset: MediaAsset, srt: String): MediaAsset =
-        runJob { api.burnSubtitles(asset.id, SubtitleRequest(srt)) }
+        runJob { api().burnSubtitles(asset.id, SubtitleRequest(srt)) }
 
     suspend fun chromaKey(asset: MediaAsset, colour: String): MediaAsset =
-        runJob { api.chromaKey(asset.id, ChromaRequest(colour)) }
+        runJob { api().chromaKey(asset.id, ChromaRequest(colour)) }
 
     suspend fun cameraMotion(asset: MediaAsset, motion: String): MediaAsset =
-        runJob { api.cameraMotion(asset.id, MotionRequest(motion)) }
+        runJob { api().cameraMotion(asset.id, MotionRequest(motion)) }
 
     suspend fun denoiseAudio(asset: MediaAsset): MediaAsset =
-        runJob { api.denoiseAudio(asset.id) }
+        runJob { api().denoiseAudio(asset.id) }
 
     suspend fun addProgressBar(asset: MediaAsset, colour: String): MediaAsset =
-        runJob { api.progressBar(asset.id, ProgressRequest(colour)) }
+        runJob { api().progressBar(asset.id, ProgressRequest(colour)) }
 }
